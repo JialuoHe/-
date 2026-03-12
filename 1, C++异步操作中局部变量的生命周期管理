@@ -1,0 +1,31 @@
+// 旧版逻辑
+void Session::on_write(...) {
+    std::string next_data; // <--- 这是一个局部变量，分配在栈上
+    {
+        // ... 从队列移动数据到 next_data ...
+    }
+
+    ws_.async_write(
+        net::buffer(next_data), // <--- buffer 只是持有了指向 next_data 内存的指针
+        [self = shared_from_this()](...){ ... }
+    ); 
+} // <--- 函数运行到这里结束，局部变量 next_data 被销毁，内存被回收！
+
+
+
+
+// 新版逻辑
+void Session::on_write(...) {
+    auto next_data_ptr = std::make_unique<std::string>(); // 1. 在堆上分配内存
+    {
+        *next_data_ptr = std::move(write_queue_.front()); // 2. 移动数据
+    }
+
+    ws_.async_write(
+        net::buffer(*next_data_ptr), 
+        [self = shared_from_this(), data_ptr = std::move(next_data_ptr)](...) { 
+            // 3. 关键：data_ptr 被 move 到了 Lambda 闭包中！
+            self->on_write(ec, bytes_transferred);
+        }
+    ); 
+}
