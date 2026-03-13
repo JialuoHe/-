@@ -29,3 +29,6 @@ void Session::on_write(...) {
         }
     ); 
 }
+
+
+在async_write里，反正都是要发送my_buffer，所以它的名字是data_ptr还是my_buffer还是别的什么都不再重要了。
