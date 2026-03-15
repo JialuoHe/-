@@ -31,4 +31,7 @@ void Session::on_write(...) {
 }
 
 
-在async_write里，反正都是要发送my_buffer，所以它的名字是data_ptr还是my_buffer还是别的什么都不再重要了。
+在boost的async_write里，反正都是要发送my_buffer，所以它的名字是data_ptr是my_buffer还是别的什么都不再重要了。
+
+旧版的std::string的指针等是在栈上，内容存在堆里；
+新版的则是next_data_ptr在栈上，指针在堆里，然后又指向堆里的内容
