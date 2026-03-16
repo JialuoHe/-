@@ -1,12 +1,16 @@
 1，静态链接比动态链接来得更快，极低延迟电子交易系统通常静态链接所有依赖库，以最小化运行时性能延迟
 
+
 2， 正确性第一，优化第二
 
+
 3， 设计针对应用用例最优的定制化数据结构是构建低延迟应用的重要一环。举例说明，对于少量元素，数组方案由于具备更好的**缓存性能（Cache performance）**反而更快；而对于大量元素，哈希表方案则更好。
+
 
 4， 一开始l1,2,3都没有数据，一开始都在内存里，然后通过后续抓数据来拷贝进l1,2,3；就和l1,l2,l3一开始是空的一样，栈和堆数据一开始也不存在l1，l2,l3，都存在内存里；只是因为抓取的算法不同才导致它们的数据是否存在更靠近cpu的缓存层里。
 
     硬件预取器决定查到的数据存在l1，还是l2
+
 
 5， 避免使用、谨慎使用或以特定的方式使用动态多态（Dynamic polymorphism）、动态内存分配（Dynamic memory allocation）和异常处理（Exception handling）。
 
@@ -17,5 +21,105 @@
     相反，静态变量不能被其他变量重用，且访问静态变量的次数可能仅占所有内存访问的一小部分，因为static是不会随着函数结束而被释放的
 
 
+
 6， 使用类型转换与数据转换操作
     有符号整数和无符号整数之间的转换是免费的（零成本）。将较小尺寸的整数转换为较大尺寸的整数可能需要一个时钟周期，但有时可以通过优化达到零成本。将较大尺寸的整数向下转换为较小尺寸的整数没有额外开销
+
+    dynamic_cast的开销是昂贵的，最好不要使用dynamic
+
+    编译器默认不同类型的指针绝对不会指向同一个地址，所以：
+
+    double x = 100;
+    const auto orig_x = x;
+    // 将 double 类型的地址强制转换为无符号 64 位整数指针
+    auto x_as_ui = (uint64_t *) (&x); 
+    // 通过位运算，将最高位（符号位）设为 1
+    *x_as_ui |= 0x8000000000000000;
+
+    可能会出错。
+
+
+7， 一般来说，对于整数和浮点值，加法最快，乘法比加法稍贵，而除法的开销则比乘法大得多。应避免在同一个表达式中混合使用单精度和双精度运算，也应避免在表达式中同时涉及浮点值和整数值。
+
+    逻辑短路与概率排序
+    逻辑与（&&）和逻辑或（||）的评估遵循“短路”原则：
+    
+    对于 &&：如果第一个操作数为 false，则不再评估第二个。
+    
+    对于 ||：如果第一个操作数为 true，则不再评估第二个。
+    
+    优化技巧：
+    
+    对于 &&：将评估为 true 的概率从低到高排列操作数。
+    
+    对于 ||：将评估为 true 的概率从高到低排列操作数。
+
+
+    传统写法：
+    if(market_state == PreOpen || market_state == Opening || market_state == Trading) {
+        // 执行某些操作...
+    }
+
+    新版写法（一开始的时候，就要根据可能有的数量来规定market state的长度，并且枚举值的设定必须让每个状态对应一个独立的位，例如 PreOpen = 0x001, Opening = 0x010, Trading = 0x100）：
+    if(market_state & (PreOpen | Opening | Trading)) {
+        // 执行某些操作...
+    }
+
+
+8， 每次分支预测失败都会浪费大量的时钟周期。
+
+    if-else 分支优化方法是保持条件数量尽可能少，并调整结构使其更具可预测性。
+
+    for 和 while 循环如果循环次数较小，通常预测效果良好。
+
+    switch 语句非常难以预测，一种有效的优化技巧是：将 case 标签值设为连续递增的整数，因为这样编译器极有可能将其实现为跳转表（Jump Tables），效率显著更高。
+
+
+
+9， 只有当代码具备足够的可复用性时，才应该创建函数。创建函数的准则应该是逻辑流的清晰度和复用价值，而不是代码的长度。
+
+    编写性能关键型函数时，如果可能，请将其放置在与其被调用的地方相同的模块（Module）中。这样做可以解锁大量的编译器优化，其中最重要的就是内联（Inlining）
+
+    总的来说，使用 std::function 和/或 std::bind 时要非常小心，很多开发者会惊讶于这些构造在底层竟然会触发虚函数调用甚至动态内存分配
+
+    对于原生类型（如 int, char, double），按值传递（Pass by value）效率极高。而对于作为函数参数的复合类型（如 struct 或 class），首选方式是 const 引用
+
+    返回复合类型（如自定义的 struct 或 class）则低效得多。在某些情况下，这会导致产生多次对象拷贝。
+
+    返回复合类型的最优方式是：让调用者先创建一个该类型的对象，然后通过引用或指针将其传递给函数，由函数直接对这个对象进行修改
+
+
+10,  能不用递归就不要用递归
+
+
+11， struct MarketState {
+        uint8_t is_pre_open : 1; // 占用 1 位
+        uint8_t is_trading  : 1; // 占用 1 位
+        uint8_t padding     : 6; // 剩下的 6 位凑齐 1 字节
+    };
+
+    这样子可以提升缓存性能，但是会增加访问开销
+
+
+12，    多态，继承都会遇到很多问题，但可以通过组合来替代
+
+    struct Order { int id; double price; };
+
+    // 继承模式：直接继承 vector 的所有能力
+    class InheritanceOrderBook : public std::vector<Order> { };
+    
+    // 组合模式：将 vector 作为成员，更安全、更受控
+    class CompositionOrderBook {
+        std::vector<Order> orders_;
+    public:
+        auto size() const noexcept {
+            return orders_.size();
+        }
+    };
+    
+    int main() {
+        InheritanceOrderBook i_book;
+        CompositionOrderBook c_book;
+        printf("InheritanceOrderBook::size():%lu CompositionOrderBook:%lu\n",   
+               i_book.size(), c_book.size());
+    }
