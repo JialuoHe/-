@@ -123,3 +123,45 @@
         printf("InheritanceOrderBook::size():%lu CompositionOrderBook:%lu\n",   
                i_book.size(), c_book.size());
     }
+
+13， crtp可以通过模板写出好的多态。
+
+14，  
+
+        template <typename Derived> // 第一步：基类说：“我需要一个类型，我把它叫 Derived”
+        class CRTPExample {
+        public:
+            void placeOrder() {
+                // 第二步：核心魔法！
+                // “虽然我现在是基类指针 (this)，但我确定我的子类类型是 Derived。”
+                // “请把我的指针强制转换成子类指针，然后直接调用子类的函数。”
+                static_cast<Derived*>(this)->actualPlaceOrder();
+            }
+            
+            void actualPlaceOrder() {
+                printf(“CRTPExample::actualPlaceOrder()\n”);
+            }
+        };
+        
+        
+        
+        // 第三步：子类继承时，把自己作为“T”传给基类
+        class SpecificCRTPExample : public CRTPExample<SpecificCRTPExample> {
+        public:
+            void actualPlaceOrder() {
+                printf(“SpecificCRTPExample::actualPlaceOrder()\n”);
+            }
+        };
+        
+        
+        int main(int, char **) {
+          // 1. 运行时多态：必须通过基类指针（或引用）来体现
+          RuntimeExample* runtime_example = new SpecificRuntimeExample();
+          runtime_example->placeOrder();
+        
+          // 2. 编译时多态：直接定义具体的 CRTP 对象
+          CRTPExample<SpecificCRTPExample> crtp_example;
+          crtp_example.placeOrder();
+        
+          return 0;
+        }
