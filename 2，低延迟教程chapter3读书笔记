@@ -165,3 +165,77 @@
         
           return 0;
         }
+
+15， 处理异常的时候建议使用 noexcept和throw，异常可以被移出hot path，所以最后一步再优化也无所谓
+
+
+16，  // 1. 糟糕的对齐：变量大小交错
+    struct PoorlyAlignedData {
+      char c;      // 1 字节
+      uint16_t u;  // 2 字节
+      double d;    // 8 字节
+      int16_t i;   // 2 字节
+    };
+    
+    // 2. 优秀的对齐：从大到小排列
+    struct WellAlignedData {
+      double d;    // 8 字节
+      uint16_t u;  // 2 字节
+      int16_t i;   // 2 字节
+      char c;      // 1 字节
+    };
+
+    还有一个pack，不过看起来我总感觉有点危险
+
+17， 在处理低延迟应用时，最好完全避免动态分配内存，或者至少要非常谨慎且克制地使用。
+
+
+18，  启动和停止线程需要时间，因此最好避免在需要时才启动新线程，而是使用线程池（Thread Pool）
+
+
+19，  线程亲和性，比方说可以把线程绑到对应的cpu线程上，我的行情系统还没有做这个，只是单纯根据cpu数量决定了线程数量
+
+
+
+20，  一个非常巧妙的设计，用来规避branch，也是上面提到过的
+
+    enum class Side : int16_t { BUY = 1, SELL = -1 };
+    position += int_fill_side * fill_qty;
+    int last_qty[3] = {0, 0, 0}; // 准备三个槽位
+    last_qty[int_fill_side + 1] = fill_qty;
+
+
+21，  const size_t size = 1024;
+    float x[size], a[size], b[size];
+    
+    for (size_t i = 0; i < size; ++i) {
+        x[i] = a[i] + b[i];
+    }
+
+    for (size_t i = 0; i < size; i += 4) {
+        x[i] = a[i] + b[i];
+        x[i + 1] = a[i + 1] + b[i + 1];
+        x[i + 2] = a[i + 2] + b[i + 2];
+        x[i + 3] = a[i + 3] + b[i + 3];
+    }
+
+    ”原书示例是针对 SSE2 指令集的。SSE2 寄存器宽度：$128$ 位。单精度浮点数（float）大小：$32$ 位（$4$ 字节）。计算公式：$128 \div 32 = 4$。这意味着 SSE2 的寄存器一锅只能煮 $4$ 个 float。如果你写 += 16，编译器在底层还是得拆成 $4$ 次 SSE2 操作来完成。所以为了演示方便，作者用了 += 4。如果你使用的是更现代、更强大的 AVX-512 指令集，+= 16 才是真正的“满载运行”
+
+22， 强度削减是一个术语，用于描述编译器的一项优化技术：将开销较大的复杂操作替换为更简单、更廉价的指令，以提升性能。一个经典的例子是：编译器将涉及“除以某个值”的操作替换为“乘以该值的倒数”。另一个例子是将“与循环索引相乘”的操作替换为“加法”操作
+
+
+    #include <cstdint>
+
+    int main() {
+      const auto price = 10.125; // 价格序列如：10.125, 10.130, 10.135...
+      constexpr auto min_price_increment = 0.005;
+      [[maybe_unused]] int64_t int_price = 0;
+    
+      // 1. 未进行强度削减：执行开销巨大的除法
+      int_price = price / min_price_increment;
+    
+      // 2. 强度削减：转换为乘法
+      // 这个倒数在编译时就已经算好了
+      constexpr auto inv_min_price_increment = 1 / min_price_increment;
+      int_price = price * inv_min_price_increment;
+    }
