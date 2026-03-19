@@ -239,3 +239,18 @@
       constexpr auto inv_min_price_increment = 1 / min_price_increment;
       int_price = price * inv_min_price_increment;
     }
+
+23， constexpr double calculate_tick_inv(double tick_size) {
+        return 1.0 / tick_size;
+    }
+    
+    // 在你的行情系统里：
+    constexpr auto inv_tick = calculate_tick_inv(0.005); 
+    // 编译器直接把 inv_tick 替换成了 200.0，函数调用的开销彻底消失了。
+
+    constexpr这个表达式感觉很有用，之后在项目里要记得看。
+
+24，  使用 restrict关键字去除指针别名的影响，个人认为这是风险和性能的tradeoff
+
+
+25，  complier flag实在是看不懂，等以后再看吧。
