@@ -6,4 +6,38 @@
     这两个是处理分支预测用的
 
 
-2，  
+=========================================================================================================================
+代码：
+
+template<typename T, typename... A>
+  inline auto createAndStartThread(int core_id, const std::string &name, T &&func, A &&... args) noexcept {
+    auto t = new std::thread([&]() {
+      if (core_id >= 0 && !setThreadCore(core_id)) {
+        std::cerr << "Failed to set core affinity for " << name << " " << pthread_self() << " to " << core_id << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      std::cerr << "Set core affinity for " << name << " " << pthread_self() << " to " << core_id << std::endl;
+
+      std::forward<T>(func)((std::forward<A>(args))...);
+    });
+
+    using namespace std::literals::chrono_literals;
+    std::this_thread::sleep_for(1s);
+
+    return t;
+  }
+
+============================================================================================================================
+
+
+2，  inline 解决 ODR（唯一定义原则）冲突： 这是一个头文件（#pragma once）。如果这个头文件被多个 .cpp 文件引用，没有 inline 的话，链接器会报错“重复定义”。加上 inline 后，链接器允许该函数在多个编译单元中存在，并在链接时只保留一个。
+
+3,   noexcept承诺此函数内部不会有异常
+
+4，  左值 (L-value)：有“家”的人。它在内存里有固定的地址，有名字。你可以对它使用 & 取地址符。
+
+      例子：变量 a、变量 b、解引用后的指针 *p、返回引用的函数。
+      
+      右值 (R-value)：路过的“幽灵”。它是临时的，没有名字，或者即将被销毁。你不能（也不应该）对它使用 & 取地址符。
+
+      &&可以达到完美转发的用处，左值和右值都能传递，但是我们仍然需要forward来保持对数据的左右值属性保持，因为总有一个地方会需要右值。
