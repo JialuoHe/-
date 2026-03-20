@@ -1,1 +1,9 @@
 
+1，  macros 宏只是单纯的文本替换工具
+      #define LIKELY(x) __builtin_expect(!!(x), 1)
+      #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+
+    这两个是处理分支预测用的
+
+
+2，  
