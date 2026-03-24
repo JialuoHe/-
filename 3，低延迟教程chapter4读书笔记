@@ -69,5 +69,8 @@ inline auto createAndStartThread(int core_id, const
           (cpu_set_t), &cpuset) == 0);
       }
 
-9，   
+9，   凡是单参数的构造函数，除非有明确的理由需要隐式转换，否则应默认加上 explicit
+
+
+10，   int, float, double, char, bool, long long 某些struct和指针都是平凡类型，在deallocate时不用手动析构
 
