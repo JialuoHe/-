@@ -74,3 +74,22 @@ inline auto createAndStartThread(int core_id, const
 
 10，   int, float, double, char, bool, long long 某些struct和指针都是平凡类型，在deallocate时不用手动析构
 
+       不过，ret = new(ret) T(args...); // placement new. 在使用非平凡类型会造成资源泄漏，但是赋值=不会有这个担忧
+
+11，   *在左值表示指针，右值表示取值，要记住。在 new 完之后，ret 依然是那个地址，但它在编译器眼中的“身份”变了，旧地址的数据就消失了。
+
+
+12，   书里的无锁队列主要通过忙等待+atomic更新size来取代mutex。
+
+
+13,    final表示基准
+
+
+14，   pushValue(*s++) 等于：
+
+      pushValue(*s); // 先拿值
+      s++;
+
+
+15，   
+
