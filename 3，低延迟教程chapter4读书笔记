@@ -91,5 +91,5 @@ inline auto createAndStartThread(int core_id, const
       s++;
 
 
-15，   
+15，   socket等网络编程在linux上有很多需要记住的：NI_MAXHOST，getifaddrs，freeifaddrs......
 
