@@ -93,3 +93,9 @@ inline auto createAndStartThread(int core_id, const
 
 15，   socket等网络编程在linux上有很多需要记住的：NI_MAXHOST，getifaddrs，freeifaddrs......
 
+
+16,    回调不一定是异步，实际上回调比想的宽泛多了
+
+
+17，   socket当作插座来思考，会好一些
+
