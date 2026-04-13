@@ -1,0 +1,87 @@
+template <class type>
+void printAddresses(type *item, int n)
+{
+    for (int i = 0; i < n; i++) {
+        std::cout << static_cast<const void *>(&item[i]) << std::endl;
+    }
+}
+
+
+对“裸指针 / 退化成指针的数组”，a[i] 就是 *(a+i)；对 vector 等类，下标是成员函数语义，不能自动当成指针算术。
+
+
+
+bool isDigitString(const char *theString)
+{
+    if (theString[0] == '\0')
+        return false;
+    for (int i = 0; theString[i] != '\0'; i++)
+    {
+        if (!std::isdigit(static_cast<unsigned char>(theString[i])))
+            return false;
+    }
+    return true;
+}
+
+检测char[]是否结束要记得使用'\0'
+
+
+void reverse(char *theString)
+{
+    std::size_t len = std::strlen(theString);
+    for (std::size_t i = 0; i < len / 2; i++)
+    {
+        char tmp = theString[i];
+        theString[i] = theString[len - 1 - i];
+        theString[len - 1 - i] = tmp;
+    }
+}
+
+
+
+void printASCII(const char *theString)
+{
+    for (int i = 0; theString[i] != '\0'; i++)
+    {
+        if (i > 0)
+            std::cout << ' ';
+        std::cout << static_cast<int>(static_cast<unsigned char>(theString[i]));
+    }
+    std::cout << std::endl;
+}
+
+
+
+int countOccurrences(const char *theString, char target)
+{
+    int count = 0;
+    for (int i = 0; theString[i] != '\0'; i++)
+    {
+        if (theString[i] == target)
+            count++;
+    }
+    return count;
+}
+
+
+
+bool isPalindrome(const char *theString)
+{
+    std::size_t len = std::strlen(theString);
+    for (std::size_t i = 0; i < len / 2; i++)
+    {
+        if (theString[i] != theString[len - 1 - i])
+            return false;
+    }
+    return true;
+}
+
+
+
+int stringToInt(const char *theString)
+{
+    int value = 0;
+    for (int i = 0; theString[i] != '\0'; i++)
+        value = value * 10 + (theString[i] - '0');
+    return value;
+}
