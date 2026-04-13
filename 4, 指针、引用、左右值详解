@@ -1,0 +1,67 @@
+在 C++ 里，同一个符号在不同位置含义不同。在类型旁边写 T *p 表示 p 是指向 T 的指针；在类型旁边写 T &r 表示 r 是 T 的引用（另一个名字的别名）。在表达式里，一元 * 表示对指针解引用（得到它所指的对象）；
+
+一元 & 表示取某个对象的地址（得到指针）。所以：声明里的 */& 说明“它是什么类型”；表达式里的 */& 说明“对已有变量做什么操作”。 
+
+例子：
+
+template <class type>
+void swapIt(type &a, type &b)
+{
+    type temp = a;
+    std::cout << "&temp = " << &temp << std::endl;
+    std::cout << "&a = " << &a << std::endl;
+    std::cout << "&b = " << &b << std::endl;
+    a = b;
+    b = temp;
+}
+
+int main()
+{
+    printHeader("Template Function Checks");
+
+    int x = 2, y = 8;
+    int *p = &x;
+    int *q = &y;
+    std::cout << "&x = " << &x << " and &y = " << &y << std::endl;
+    std::cout << "&p = " << &p << " and &q = " << &q << std::endl;
+    std::cout << "*p = " << *p << " and *q = " << *q << std::endl;
+    std::cout << "p = " << p << " and q = " << q << std::endl;
+    std::cout << "======================================= " << std::endl;
+    swapIt(x, y);
+    std::cout << "======================================= " << std::endl;
+    std::cout << "&x = " << &x << " and &y = " << &y << std::endl;
+    std::cout << "&p = " << &p << " and &q = " << &q << std::endl;
+    std::cout << "*p = " << *p << " and *q = " << *q << std::endl;
+    std::cout << "p = " << p << " and q = " << q << std::endl;
+}
+
+于是出来的结果是：
+
+==============================
+Template Function Checks
+==============================
+&x = 0x60fe74 and &y = 0x60fe70
+&p = 0x60fe6c and &q = 0x60fe68
+*p = 2 and *q = 8
+p = 0x60fe74 and q = 0x60fe70
+=======================================
+&temp = 0x60fdfc
+&a = 0x60fe74
+&b = 0x60fe70
+=======================================
+&x = 0x60fe74 and &y = 0x60fe70
+&p = 0x60fe6c and &q = 0x60fe68
+*p = 8 and *q = 2
+p = 0x60fe74 and q = 0x60fe70
+
+
+首先，当x和y作为int被创建出来时，它们也有了自己的地址，我们此时可以用&来获得地址，也就是0x60fe74 and = 0x60fe70
+
+然后，指针p和q被创建出来，它们的内容是x和y的地址，但本身还是有自己的地址，也就是0x60fe6c and 0x60fe68
+
+如开头所说，由于*在表达式里起到的是解引用的效果，所以通过解开x和y的地址得到了其中的值，也就是2和8
+
+再次重复，p和q的内容是x和y的地址，所以打印出来就是一样的。
+
+回到swapit内部，我们可以看到在值传递的时候，由于没有进行copy而是直接传递，所以地址是没有变化的。
+
